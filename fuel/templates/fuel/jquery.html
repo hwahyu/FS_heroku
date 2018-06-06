@@ -1,0 +1,175 @@
+{% extends "fuel/header.html" %}
+
+{% block content %}
+<script>
+$(document).ready(function(){
+    var fuel_data = {{fuel | safe}};
+    var brand = ["7-Eleven", 
+                "Better Choice", 
+                "BOC", 
+                "BP", 
+                "Caltex", 
+                "Caltex Woolworths",
+                "Coles Express",
+                "Eagle",
+                "FastFuel 24/7",
+                "Gull",
+                "Independent",
+                "Kleenheat",
+                "Kwikfuel",
+                "Liberty",
+                "Mobil",
+                "Peak",
+                "Puma",
+                "Shell",
+                "United",
+                "Vibe",
+                "Wesco"];
+    
+    <!--Create unordered List -->
+    var bList = $('ul.brand-list');
+    $.each(brand, function(i){
+        var li = $("<li/>")
+            .attr("value", brand[i])
+            .text(brand[i])
+            .css("text-align", "center")
+            .appendTo(bList);
+    });
+    
+    <!-- add behavior to brand button -->
+    $(".dropdown").on("hide.bs.dropdown", function(){
+        $(".btn").html('Select Brand <span class="caret"></span>');
+    });
+    
+    $("#filter-list li").on({
+        mouseenter: function(){
+            $(this).css("background-color", "gray")
+        },
+        mouseleave: function(){
+            $(this).css("background-color", "white")
+        },
+        click: function(event){
+            var val = $(this).attr("value");
+            $('table tbody tr').hide()
+            $('table tbody tr td:contains('+val+')').closest('tr').show();
+        }
+    });
+    
+    $(".dropdown").on("show.bs.dropdown", function(){
+        $(".btn").html('Select Brand <span class="caret caret-up"></span>');
+    });
+    
+    <!--Populate and create Table -->
+    $.makeTable = function (data) {
+        var table = $('<table class="table table-striped" id="fuel_table">');
+        <!-- table header -->
+        var tblHeader = "<thead><tr>";
+        for (var k in data[0]) tblHeader += "<th style='text-align:center'>" + k.toUpperCase() + "</th>";
+        tblHeader += "</tr></thead>";
+        $(tblHeader).appendTo(table);
+        
+        var tblBody = "<tbody>";
+        $(tblBody).appendTo(table);
+        <!-- table row -->
+        $.each(data, function (index, value) { 
+            var TableRow = "<tr>";
+            $.each(value, function (key, val) {
+                TableRow += "<td>" + val + "</td>";
+            });
+            TableRow += "</tr>";
+            $(table).append(TableRow);
+        });
+        return ($(table));
+    };
+    
+    var fuel_data = eval(fuel_data);
+    var table = $.makeTable(fuel_data);
+    $(table).appendTo("#fuelTable");
+    
+    <!-- Filter case-insensitive words -->
+    $("#filter-input").on("keyup", function() {
+        var value = $(this).val().toLowerCase();
+        $("#fuelTable tr").filter(function() {
+            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+        });
+    }); 
+    
+     <!-- Add behavior to Suburb List selector to filter table -->
+    $("#suburb-selector").change(function(){
+        var selection = $(this).val();
+        $('table tbody tr').hide();
+        $('table tbody tr td:contains('+selection+')').closest('tr').show(); 
+    });
+});
+</script>
+
+<div class= "jumbotron">
+    <div class= "container-fluid">
+        <h1>WA Fuel Scrapper using jQuery.js</h1>
+    </div> 
+</div>
+
+<form method= "GET">
+<div class= "row">
+    <h2> 1. Choose your Product </h2>
+    <div class = "col-md-4">
+        <label class= "label label-default">Product Selection: </label>
+        <select class="form-control" name="Product">
+            <option selected value="1">ULP</option>
+            <option value="2">PULP</option>
+            <option value="6">RON98</option>
+            <option value="4">Diesel</option>
+            <option value="11">Brand Diesel</option>
+            <option value="5">LPG</option>
+            <option value="10">E85</option>
+        </select>
+    </div>
+    <div class = "col-md-4">
+        <div class= "date" name="Day">
+            <label class= "label label-default" for="col-filter">Filter By Date: </label>
+            <select id= "date-list" class="form-control">Select Date</button>
+                <option selected="selected" value= "today">Today</option>
+                <option value= "tomorrow">Tomorrow</option>
+                <option value= "yesterday">Yesterday</option>
+            </select>
+        </div>
+    </div>
+</div>
+<div>
+    <br>
+    <input class="btn btn-primary" type="submit" value="Submit">
+</div>
+</form>
+<hr>
+<h2> 2. Filter your Product </h2>
+<label class= "label label-default" for="filter">By Word: </label>
+<input id= "filter-input" class= "form-control" type= "text" placeholder="Search for ... "/>
+<div class= "row">
+    <div class = "col-md-2">
+        <br>
+        <div class= "dropdown">
+            <label class= "label label-default" for="col-filter">By Brand: </label>
+            <button id= "button-list" class="btn btn-primary dropdown-toggle" type= "button" data-toggle= "dropdown">Select Brand <span class= "caret"></span></button>
+            <ul id= "filter-list" class="brand-list dropdown-menu"></ul>
+        </div>
+    </div>
+    <div class = "col-md-4">
+        <br>
+        <div class= "suburb">
+            <label class= "label label-default" for="col-filter">By Suburb: </label>
+            <select id= "suburb-selector" class="form-control">Select Suburb</button>
+                {% if suburb %}
+                    <option selected="selected" value= "">Any Suburb</option>
+                    {% for v in suburb %}
+                        <option value= "{{ v | safe }}"> {{ v | safe }} </option>
+                    {% endfor %}
+                {% endif %}
+            </select>
+        </div>
+    </div>
+</div>
+<hr>
+<h2> 3. Result </h2>
+<div id= "fuelTable" class= "container-fluid"></div>
+
+{% endblock %}

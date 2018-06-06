@@ -1,0 +1,153 @@
+{% extends "fuel/header.html" %}
+
+{% block content %}
+<script src="//unpkg.com/mithril/mithril.js"></script>
+<script> 
+    var root = document.body
+    var state ={ fuelPrices:[], fuelFilter: [] };
+    var fuel_data = [];
+    var suburb_list = {{ suburb | safe }};
+    var brand_list = {{ brand | safe }};
+    var header = [];
+    
+    function suburb_selector(){
+        var selection = this.value;
+        if(selection != ""){
+            state.fuelFilter = state.fuelPrices.filter(x => x.location == selection);
+        }
+        else {
+            state.fuelFilter = state.fuelPrices;
+        }
+    }
+    
+    function brand_selector(){
+        var selection = this.value;
+        if(selection === "Any Brand"){
+            state.fuelFilter = state.fuelPrices;
+        }
+        else {
+            state.fuelFilter = state.fuelPrices.filter(x => x.brand == selection);
+        }
+    }
+    
+    var fuelApp = {
+        view: function() {
+            
+            var newArray = state.fuelFilter.map(function(each){
+                return m('tr',        
+                    m('td',each['brand']),
+                    m('td',each['date']),
+                    m('td',each['price']),
+                    m('td',each['location']),
+                    m('td',each['address']),
+                    m('td',each['phone']),
+                    m('td',each['latitude']),
+                    m('td',each['longitude']),
+                );
+            });
+            
+            return m("main", 
+                m(".header", 
+                    m("nav.navbar.navbar-inverse.navbar-fixed-top", 
+                        m("div.container-fluid",
+                            m("div.navbar-header",
+                                m("a.navbar-brand[href='/']", "FuelWatch"),
+                                m("ul.nav.navbar-nav",
+                                    m("li",m("a[href='/']", "Home")),
+                                    m("li",m("a[href='/contact/']", "Contact")),
+                                    m("li",m("a[href='/jquery']", "jQuery")),  
+  
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
+                m(".body",
+                    m("div.container-fluid",
+                        m("h1", 
+                            m("div.jumbotron", "WA Fuel Scrapper using Mithril.js "),
+                            m('hr'),
+                            m('h3', "1. Choose Product:"),
+                            m("div.row",
+                                m("div.col-sm-3",                            
+                                    m('select.form-control', 
+                                        m('option.selected[value = "today"]',"Today"),
+                                        m('option[value = "tomorrow"]',"Tomorrow"),
+                                        m('option[value = "yesterday"]',"Yesterday"),
+                                    )
+                                ),
+                                m("div.col-sm-2.text-center",
+                                    m('button.btn.btn-default.btn-primary', { onclick: function(){
+                                            m.request({method:"GET", url:'/mithril/by/product/?Product=1'}).then(function(fuel_data){
+                                               state.fuelPrices = fuel_data;
+                                               header = Object.keys(state.fuelPrices[0]).map(function(k){
+                                                            return m("th[style='text-align:center']", k.toUpperCase());
+                                                        }); 
+                                            });
+                                        },
+                                    }, 'Unleaded 91'),
+                                ),
+                                m("div.col-sm-2.text-center",
+                                    m('button.btn.btn-default.btn-danger', { onclick: function(){
+                                            m.request({method:"GET", url:'/mithril/by/product/?Product=2'}).then(function(fuel_data){
+                                               state.fuelPrices = fuel_data;
+                                               state.fuelFilter = fuel_data;
+                                               header = Object.keys(state.fuelPrices[0]).map(function(k){
+                                                            return m("th[style='text-align:center']", k.toUpperCase());
+                                                        }); 
+                                            });
+                                        },
+                                    }, 'Premium 95'),
+                                ),
+                                m("div.col-sm-2.text-center",
+                                    m('button.btn.btn-default.btn-info', { onclick: function(){
+                                            m.request({method:"GET", url:'/mithril/by/product/?Product=6'}).then(function(fuel_data){
+                                                state.fuelPrices = fuel_data; 
+                                                state.fuelFilter = fuel_data;
+                                                header = Object.keys(state.fuelPrices[0]).map(function(k){
+                                                            return m("th[style='text-align:center']", k.toUpperCase());
+                                                        });
+                                            });
+                                        },
+                                    }, 'RON 98'),
+                                ),  
+                            ),
+                            m("hr"),
+                            m('h3', "2. Filter your Product:"),
+                            m("div.row",
+                                m("div.col-sm-4",   
+                                    m('h4',
+                                        m("label.label.label-default", "filter by Brand"),                         
+                                    ),
+                                    m('select.form-control', {onchange: brand_selector},brand_list.map(function(u){
+                                        return m("option", {value: u}, u)
+                                    }))
+                                ),
+                                m("div.col-sm-4",   
+                                    m('h4',
+                                        m("label.label.label-default", "filter by Suburb"),                         
+                                    ),
+                                    m('select.form-control', {onchange: suburb_selector}, suburb_list.map(function(s){
+                                        return m("option", {value: s}, s);
+                                    }))
+                                ),
+                            ),
+                        ), 
+                    ),
+                    m("hr"),
+                    m('h3', "3. Result:"),
+                    m("div.container-fluid",
+                        m('table.table.table-striped', 
+                            m("tr", header),
+                            newArray,)
+                    ),
+                ),
+            );
+        },
+    }
+    
+    m.mount(root, fuelApp)
+    
+</script>
+
+{% endblock %}
